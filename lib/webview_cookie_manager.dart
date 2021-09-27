@@ -52,6 +52,11 @@ class WebviewCookieManager {
                 .toList());
   }
 
+  Future<String> getCookiesRaw(String? url) {
+    return _channel.invokeMethod<String>('getCookiesRaw', {'url': url}).then(
+        (results) => results == null ? "" : results.toString());
+  }
+
   /// Remove cookies with [currentUrl] for IOS and Android
   Future<void> removeCookie(String currentUrl) async {
     final listCookies = await getCookies(currentUrl);
@@ -91,6 +96,14 @@ class WebviewCookieManager {
       return output;
     }).toList();
     return _channel.invokeMethod<void>('setCookies', transferCookies);
+  }
+
+  Future<bool> setCookiesRaw(List<String> cookies, String url) async {
+    final transferCookies = <String, dynamic>{
+      "url": [url],
+      "cookies": cookies
+    };
+    return await _channel.invokeMethod('setCookiesRaw', transferCookies);
   }
 
   String removeInvalidCharacter(String value) {

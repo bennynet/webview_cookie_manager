@@ -18,6 +18,7 @@ import android.webkit.ValueCallback;
 import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,6 +108,24 @@ public class WebviewCookieManagerPlugin implements FlutterPlugin, MethodCallHand
 
         result.success(serializedCookies);
     }
+    private static void getCookiesRaw(final MethodCall methodCall, final Result result) {
+        if (!(methodCall.arguments() instanceof Map)) {
+            result.error(
+                    "Invalid argument. Expected Map<String,String>, received "
+                            + (methodCall.arguments().getClass().getSimpleName()),
+                    null,
+                    null);
+            return;
+        }
+
+        final Map<String, String> arguments = methodCall.arguments();
+
+        CookieManager cookieManager = CookieManager.getInstance();
+
+        final String url = arguments.get("url");
+        final String allCookiesString = url == null ? null : cookieManager.getCookie(url);
+        result.success(allCookiesString);
+    }
 
     private static void setCookies(final MethodCall methodCall, final Result result) {
         if (!(methodCall.arguments() instanceof List)) {
@@ -134,6 +153,21 @@ public class WebviewCookieManagerPlugin implements FlutterPlugin, MethodCallHand
         }
 
         result.success(null);
+    }
+    private static void setCookiesRaw(final MethodCall methodCall, final Result result) {
+
+        final Map<String, List<String>> arguments = methodCall.arguments();
+
+        List<String> cookiecontentList = arguments.get("cookies");
+        List<String> urls=arguments.get("url");
+
+
+        CookieManager cookieManager = CookieManager.getInstance();
+
+        for (String cookie : cookiecontentList) {
+            cookieManager.setCookie(urls.get(0) , cookie);
+        }
+        result.success(true);
     }
 
     private static Map<String, Object> cookieToMap(HttpCookie cookie) {
@@ -175,8 +209,14 @@ public class WebviewCookieManagerPlugin implements FlutterPlugin, MethodCallHand
             case "getCookies":
                 getCookies(methodCall, result);
                 break;
+            case "getCookiesRaw":
+                getCookiesRaw(methodCall, result);
+                break;
             case "setCookies":
                 setCookies(methodCall, result);
+                break;
+            case "setCookiesRaw":
+                setCookiesRaw(methodCall, result);
                 break;
             default:
                 result.notImplemented();
